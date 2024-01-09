@@ -1,0 +1,11 @@
+~~ variable;
+set name = "flow is dope"
+set number = 100-50+25/2
+
+~~ functions;
+set customPrint = ... > {
+    print < ...
+}
+
+~~ tests;
+customPrint < name, "john", number, 100*2
