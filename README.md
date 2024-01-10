@@ -24,4 +24,4 @@ change_name();
 ```
 
 # Syntax Highlighting
-Follow the instructions at [Friz Syntax Highlighting](https://github.com/HighFlowey/Friz?tab=readme-ov-file#installing-the-vscode-extension-sytanx-highlighting)
+Follow the instructions at [Friz Syntax Highlighting](https://github.com/HighFlowey/Friz?tab=readme-ov-file#installing-the-vscode-extension-syntax-highlighting)
