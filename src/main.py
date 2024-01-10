@@ -28,12 +28,13 @@ class ThreadItem():
         return getattr(self, key)
 
 class Scope():
-    __slots__ = ["start_character_index", "end_character_index", "nest", "tiedToVariable", "bookItems", "threadItems"]
+    __slots__ = ["evalGlobals", "start_character_index", "end_character_index", "nest", "tiedToVariable", "bookItems", "threadItems"]
     def __init__(self, start_character_index, nest=0):
         self.start_character_index = start_character_index
         self.bookItems: list[BookItem] = []
         self.threadItems: list[ThreadItem] = []
         self.tiedToVariable = False
+        self.evalGlobals = {}
         self.nest = nest
 
 class Lexer():
@@ -125,6 +126,44 @@ class Lexer():
             self.accepting_scope = value
         elif value.isdigit():
             type = Variable.Number
+        else:
+            keys = regex.findall(r"(\w)", value)
+            operators = regex.findall(r"(\W)(?=\s)", value)
+            sum = 0
+
+            try:
+                value = eval(value) + sum
+            except:
+                for i, key in enumerate(keys):
+                    operationType = operators[i-1] if len(operators) > i-1 else None
+                    x = 0
+
+                    try:
+                        x = int(key)
+                    except:
+                        variable = self.find_variable(key)
+                        assert variable is not None, "variable doesn't exist"
+                        assert variable.type is Variable.Number, "variable is not a number"
+                        x = int(variable.value)
+
+                    if i == 0:
+                        sum = x
+                        continue
+
+                    if operationType == "-":
+                        sum -= x
+                    elif operationType == "+":
+                        sum += x
+                    elif operationType == "*":
+                        sum *= x
+                    elif operationType == "/":
+                        sum /= x
+                    elif operationType == "%":
+                        sum %= x
+                
+                value = sum
+
+            type = Variable.Number
 
         return value, type
 
@@ -147,6 +186,8 @@ class Lexer():
         key = self.word.strip()
         self.reset_word()
         value, type = self.parse_value(variable)
+
+        self.current_scope.evalGlobals[key] = value
 
         if variable == None:
             bookItem = BookItem(type)
@@ -194,7 +235,7 @@ class Lexer():
                     self.next_character()
                     self.accept_character()
                 self.reset_word()
-            elif (self.get_next_character() == "(") and (variable.type is Variable.Function):
+            elif (self.get_next_character() == "(") and (variable and variable.type is Variable.Function):
                 threadItem = ThreadItem(Operation.CallFunction)
                 threadItem.scope = variable.value["scope"]
                 self.current_scope.threadItems.insert(-1, threadItem)
@@ -235,6 +276,10 @@ class Lexer():
                 self.next_character()
                 self.accept_character()
             elif self.character.isspace():
+                self.reset_word()
+                self.next_character()
+                self.accept_character()
+            elif self.character == ";":
                 self.reset_word()
                 self.next_character()
                 self.accept_character()
